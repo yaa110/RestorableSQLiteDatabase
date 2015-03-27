@@ -6,6 +6,7 @@ import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Set;
@@ -23,14 +24,14 @@ public class RestorableSQLiteDatabase {
     private static final String ROWID = "rowid";
 
     /**
-     * The hash table to map a tag to its restoring query.
+     * The hash table to map a tag to its restoring queries.
      */
-    public Hashtable<String, String> mTagQueryTable;
+    public Hashtable<String, ArrayList<String>> mTagQueryTable;
 
     /**
-     * Maps a tag to the parameters should be used in the query string.
+     * Maps a tag to the parameters should be used in the queries.
      */
-    public HashMap<String, String[]> mTagQueryParameters;
+    public HashMap<String, ArrayList<String[]>> mTagQueryParameters;
 
     public static RestorableSQLiteDatabase getInstance(SQLiteDatabase mSQLiteDatabase){
         if(mInstance == null) {
@@ -80,11 +81,11 @@ public class RestorableSQLiteDatabase {
 
     /**
      * Provides the query to which the tag is mapped.
-     * @param tag Possible tag of restoring query.
+     * @param tag Possible tag of restoring queries.
      * @throws IllegalArgumentException if the tag is null.
-     * @return the query to which the tag is mapped, or null if the hash table contains no mapping for the tag.
+     * @return the queries to which the tag is mapped, or null if the hash table contains no mapping for the tag.
      */
-    public String getQuery(String tag) {
+    public ArrayList<String> getQueries(String tag) {
         if (tag == null)
             throw new IllegalArgumentException("The tag must not be null.");
 
@@ -95,7 +96,7 @@ public class RestorableSQLiteDatabase {
      * Returns the hash table.
      * @return the hash table.
      */
-    public Hashtable<String, String> getTagQueryTable() {
+    public Hashtable<String, ArrayList<String>> getTagQueryTable() {
         return mTagQueryTable;
     }
 
@@ -103,7 +104,7 @@ public class RestorableSQLiteDatabase {
      * Returns the parameters map.
      * @return the parameters map.
      */
-    public HashMap<String, String[]> getTagQueryParameters() {
+    public HashMap<String, ArrayList<String[]>> getTagQueryParameters() {
         return mTagQueryParameters;
     }
 
@@ -199,6 +200,9 @@ public class RestorableSQLiteDatabase {
         if (tag == null)
             throw new IllegalArgumentException("The tag must not be null.");
 
+        ArrayList<String> queries = new ArrayList<>();
+        ArrayList<String[]> queriesParameters = new ArrayList<>();
+
         // Determines if restoring query of replacement is generated
         boolean restore_status = false;
 
@@ -244,8 +248,11 @@ public class RestorableSQLiteDatabase {
                 sql.append(" = ?");
                 parameters[i] = (String) initialValues.get(rowIdAlias);
 
-                mTagQueryTable.put(tag, sql.toString());
-                mTagQueryParameters.put(tag, parameters);
+                queries.add(sql.toString());
+                queriesParameters.add(parameters);
+
+                mTagQueryTable.put(tag, queries);
+                mTagQueryParameters.put(tag, queriesParameters);
 
                 restore_status = true;
             }
@@ -263,11 +270,16 @@ public class RestorableSQLiteDatabase {
 
         // Generates query to restore insertion
         if (id != -1 && !restore_status) {
-            mTagQueryTable.put(tag, "DELETE FROM " + table + " WHERE " + ROWID + " = ?");
-            mTagQueryParameters.put(tag, new String[] {id + ""});
+            queries.add("DELETE FROM " + table + " WHERE " + ROWID + " = ?");
+            queriesParameters.add(new String[] {id + ""});
+
+            mTagQueryTable.put(tag, queries);
+            mTagQueryParameters.put(tag, queriesParameters);
         }
 
         return id;
     }
+
+    // TODO rwaQueries, executions, update and delete restoring: http://grepcode.com/file/repo1.maven.org/maven2/org.robolectric/android-all/5.0.0_r2-robolectric-0/android/database/sqlite/SQLiteDatabase.java
 
 }
