@@ -52,8 +52,12 @@ public class RestorableSQLiteDatabase {
      * Checks if the hash table contains the tag.
      * @param tag Possible tag of restoring query.
      * @return true if the hash table contains the tag; false otherwise.
+     * @throws NullPointerException if the tag is null.
      */
     public boolean containsTag(String tag) {
+        if (tag == null)
+            throw new NullPointerException("The tag is null.");
+
         return mTagQueryTable.containsKey(tag);
     }
 
@@ -68,9 +72,13 @@ public class RestorableSQLiteDatabase {
     /**
      * Provides the query to which the tag is mapped.
      * @param tag Possible tag of restoring query.
+     * @throws NullPointerException if the tag is null.
      * @return the query to which the tag is mapped, or null if the hash table contains no mapping for the tag.
      */
     public String getQuery(String tag) {
+        if (tag == null)
+            throw new NullPointerException("The tag is null.");
+
         return mTagQueryTable.get(tag);
     }
 
