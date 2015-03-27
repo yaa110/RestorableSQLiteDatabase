@@ -3,7 +3,6 @@ package com.github.yaa110.db;
 import android.content.ContentValues;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteStatement;
 import android.util.Log;
 
 /**
@@ -25,7 +24,7 @@ public class RestorableSQLiteDatabase {
     }
 
     /**
-     * private constructor of singleton pattern
+     * Private constructor of singleton pattern
      * @param mSQLiteDatabase the instance of SQLiteDatabase to be wrapped
      */
     private RestorableSQLiteDatabase(SQLiteDatabase mSQLiteDatabase) {
@@ -40,20 +39,7 @@ public class RestorableSQLiteDatabase {
     }
 
     /**
-     * Convenience method for inserting a row into the database.
-     *
-     * @param table the table to insert the row into
-     * @param nullColumnHack optional; may be <code>null</code>.
-     *            SQL doesn't allow inserting a completely empty row without
-     *            naming at least one column name.  If your provided <code>values</code> is
-     *            empty, no column names are known and an empty row can't be inserted.
-     *            If not set to null, the <code>nullColumnHack</code> parameter
-     *            provides the name of nullable column name to explicitly insert a NULL into
-     *            in the case where your <code>values</code> is empty.
-     * @param values this map contains the initial column values for the
-     *            row. The keys should be the column names and the values the
-     *            column values
-     * @return the row ID of the newly inserted row, or -1 if an error occurred
+     * Use the {@link android.database.sqlite.SQLiteDatabase#insert(String, String, android.content.ContentValues) insert} method.
      */
     public long insert(String table, String nullColumnHack, ContentValues values) {
         try {
@@ -65,21 +51,7 @@ public class RestorableSQLiteDatabase {
     }
 
     /**
-     * Convenience method for inserting a row into the database.
-     *
-     * @param table the table to insert the row into
-     * @param nullColumnHack optional; may be <code>null</code>.
-     *            SQL doesn't allow inserting a completely empty row without
-     *            naming at least one column name.  If your provided <code>values</code> is
-     *            empty, no column names are known and an empty row can't be inserted.
-     *            If not set to null, the <code>nullColumnHack</code> parameter
-     *            provides the name of nullable column name to explicitly insert a NULL into
-     *            in the case where your <code>values</code> is empty.
-     * @param values this map contains the initial column values for the
-     *            row. The keys should be the column names and the values the
-     *            column values
-     * @throws SQLException
-     * @return the row ID of the newly inserted row, or -1 if an error occurred
+     * Use the {@link android.database.sqlite.SQLiteDatabase#insertOrThrow(String, String, android.content.ContentValues) insertOrThrow} method.
      */
     public long insertOrThrow(String table, String nullColumnHack, ContentValues values)
             throws SQLException {
@@ -87,19 +59,7 @@ public class RestorableSQLiteDatabase {
     }
 
     /**
-     * Convenience method for replacing a row in the database.
-     *
-     * @param table the table in which to replace the row
-     * @param nullColumnHack optional; may be <code>null</code>.
-     *            SQL doesn't allow inserting a completely empty row without
-     *            naming at least one column name.  If your provided <code>initialValues</code> is
-     *            empty, no column names are known and an empty row can't be inserted.
-     *            If not set to null, the <code>nullColumnHack</code> parameter
-     *            provides the name of nullable column name to explicitly insert a NULL into
-     *            in the case where your <code>initialValues</code> is empty.
-     * @param initialValues this map contains the initial column values for
-     *   the row.
-     * @return the row ID of the newly inserted row, or -1 if an error occurred
+     * Use the {@link android.database.sqlite.SQLiteDatabase#replace(String, String, android.content.ContentValues) replace} method.
      */
     public long replace(String table, String nullColumnHack, ContentValues initialValues) {
         try {
@@ -112,20 +72,7 @@ public class RestorableSQLiteDatabase {
     }
 
     /**
-     * Convenience method for replacing a row in the database.
-     *
-     * @param table the table in which to replace the row
-     * @param nullColumnHack optional; may be <code>null</code>.
-     *            SQL doesn't allow inserting a completely empty row without
-     *            naming at least one column name.  If your provided <code>initialValues</code> is
-     *            empty, no column names are known and an empty row can't be inserted.
-     *            If not set to null, the <code>nullColumnHack</code> parameter
-     *            provides the name of nullable column name to explicitly insert a NULL into
-     *            in the case where your <code>initialValues</code> is empty.
-     * @param initialValues this map contains the initial column values for
-     *   the row. The key
-     * @throws SQLException
-     * @return the row ID of the newly inserted row, or -1 if an error occurred
+     * Use the {@link android.database.sqlite.SQLiteDatabase#replaceOrThrow(String, String, android.content.ContentValues) replaceOrThrow} method.
      */
     public long replaceOrThrow(String table, String nullColumnHack,
                                ContentValues initialValues) throws SQLException {
@@ -134,23 +81,7 @@ public class RestorableSQLiteDatabase {
     }
 
     /**
-     * General method for inserting a row into the database.
-     *
-     * @param table the table to insert the row into
-     * @param nullColumnHack optional; may be <code>null</code>.
-     *            SQL doesn't allow inserting a completely empty row without
-     *            naming at least one column name.  If your provided <code>initialValues</code> is
-     *            empty, no column names are known and an empty row can't be inserted.
-     *            If not set to null, the <code>nullColumnHack</code> parameter
-     *            provides the name of nullable column name to explicitly insert a NULL into
-     *            in the case where your <code>initialValues</code> is empty.
-     * @param initialValues this map contains the initial column values for the
-     *            row. The keys should be the column names and the values the
-     *            column values
-     * @param conflictAlgorithm for insert conflict resolver
-     * @return the row ID of the newly inserted row
-     * OR the primary key of the existing row if the input param 'conflictAlgorithm' =
-     * OR -1 if any error
+     * Use the {@link android.database.sqlite.SQLiteDatabase#replaceOrThrow(String, String, android.content.ContentValues) insertWithOnConflict} method.
      */
     public long insertWithOnConflict(String table, String nullColumnHack,
                                      ContentValues initialValues, int conflictAlgorithm) {
