@@ -224,7 +224,8 @@ public class RestorableSQLiteDatabase {
                 sql.append(" SET ");
 
                 int i = 0;
-                String[] parameters = new String[restoring_cursor.getColumnCount() - 1];
+                String[] parameters = new String[restoring_cursor.getColumnCount()];
+
                 for (String columnName : restoring_cursor.getColumnNames()) {
                     if (columnName.equals(rowIdAlias))
                         continue;
@@ -233,16 +234,15 @@ public class RestorableSQLiteDatabase {
 
                     sql.append(columnName);
                     sql.append(" = ?");
-                    try {
-                        parameters[i] = restoring_cursor.getString(restoring_cursor.getColumnIndex(columnName));
-                    } catch (Exception ignored) {}
+                    parameters[i] = restoring_cursor.getString(restoring_cursor.getColumnIndex(columnName));
+
                     i++;
                 }
 
                 sql.append(" WHERE ");
                 sql.append(rowIdAlias);
-                sql.append(" = ");
-                sql.append((String) initialValues.get(rowIdAlias));
+                sql.append(" = ?");
+                parameters[i] = (String) initialValues.get(rowIdAlias);
 
                 mTagQueryTable.put(tag, sql.toString());
                 mTagQueryParameters.put(tag, parameters);
