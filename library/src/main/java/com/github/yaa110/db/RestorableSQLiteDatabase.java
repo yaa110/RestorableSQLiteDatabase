@@ -1,6 +1,7 @@
 package com.github.yaa110.db;
 
 import android.content.ContentValues;
+import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
@@ -139,15 +140,16 @@ public class RestorableSQLiteDatabase {
     /**
      * Use the {@link android.database.sqlite.SQLiteDatabase#replace(String, String, android.content.ContentValues) replace} method.
      * @param tag The tag to be mapped to the restoring query.
+     * @param rowIdAlias The alias used in the initialValues to set the value of ROWID. Passing null will cause using the default value of rowid.
      * @throws IllegalArgumentException if the tag is null.
      */
-    public long replace(String table, String nullColumnHack, ContentValues initialValues, String tag) {
+    public long replace(String table, String nullColumnHack, ContentValues initialValues, String tag, String rowIdAlias) {
         if (tag == null)
             throw new IllegalArgumentException("The tag must not be null.");
 
         try {
             return insertWithOnConflict(table, nullColumnHack, initialValues,
-                    SQLiteDatabase.CONFLICT_REPLACE, tag);
+                    SQLiteDatabase.CONFLICT_REPLACE, tag, rowIdAlias);
         } catch (SQLException e) {
             Log.e(TAG, "Error inserting " + initialValues, e);
             return -1;
@@ -157,15 +159,16 @@ public class RestorableSQLiteDatabase {
     /**
      * Use the {@link android.database.sqlite.SQLiteDatabase#replaceOrThrow(String, String, android.content.ContentValues) replaceOrThrow} method.
      * @param tag The tag to be mapped to the restoring query.
+     * @param rowIdAlias The alias used in the initialValues to set the value of ROWID. Passing null will cause using the default value of rowid.
      * @throws IllegalArgumentException if the tag is null.
      */
     public long replaceOrThrow(String table, String nullColumnHack,
-                               ContentValues initialValues, String tag) throws SQLException {
+                               ContentValues initialValues, String tag, String rowIdAlias) throws SQLException {
         if (tag == null)
             throw new IllegalArgumentException("The tag must not be null.");
 
         return insertWithOnConflict(table, nullColumnHack, initialValues,
-                SQLiteDatabase.CONFLICT_REPLACE, tag);
+                SQLiteDatabase.CONFLICT_REPLACE, tag, rowIdAlias);
     }
 
     /**
@@ -175,9 +178,82 @@ public class RestorableSQLiteDatabase {
      */
     public long insertWithOnConflict(String table, String nullColumnHack,
                                      ContentValues initialValues, int conflictAlgorithm, String tag) {
+        return insertWithOnConflict(
+                table,
+                nullColumnHack,
+                initialValues,
+                conflictAlgorithm,
+                tag,
+                null
+        );
+    }
+
+    /**
+     * Use the {@link android.database.sqlite.SQLiteDatabase#replaceOrThrow(String, String, android.content.ContentValues) insertWithOnConflict} method.
+     * @param tag The tag to be mapped to the restoring query.
+     * @param rowIdAlias The alias used in the initialValues to set the value of ROWID. Passing null will cause using the default value of rowid.
+     * @throws IllegalArgumentException if the tag is null.
+     */
+    public long insertWithOnConflict(String table, String nullColumnHack,
+                                     ContentValues initialValues, int conflictAlgorithm, String tag, String rowIdAlias) {
         if (tag == null)
             throw new IllegalArgumentException("The tag must not be null.");
 
+        // Determines if restoring query of replacement is generated
+        boolean restore_status = false;
+
+        // Generates replacement restoring query
+        if (conflictAlgorithm == SQLiteDatabase.CONFLICT_REPLACE) {
+            if (rowIdAlias == null) rowIdAlias = ROWID;
+
+            Cursor restoring_cursor = mSQLiteDatabase.query(
+                    table,
+                    null,
+                    rowIdAlias + " = ?",
+                    new String[] {(String) initialValues.get(rowIdAlias)},
+                    null,
+                    null,
+                    null,
+                    null
+            );
+
+            if (restoring_cursor.moveToFirst()) {
+                StringBuilder sql = new StringBuilder();
+                sql.append("UPDATE ");
+                sql.append(table);
+                sql.append(" SET ");
+
+                int i = 0;
+                String[] parameters = new String[restoring_cursor.getColumnCount() - 1];
+                for (String columnName : restoring_cursor.getColumnNames()) {
+                    if (columnName.equals(rowIdAlias))
+                        continue;
+
+                    if (i > 0) sql.append(", ");
+
+                    sql.append(columnName);
+                    sql.append(" = ?");
+                    try {
+                        parameters[i] = restoring_cursor.getString(restoring_cursor.getColumnIndex(columnName));
+                    } catch (Exception ignored) {}
+                    i++;
+                }
+
+                sql.append(" WHERE ");
+                sql.append(rowIdAlias);
+                sql.append(" = ");
+                sql.append((String) initialValues.get(rowIdAlias));
+
+                mTagQueryTable.put(tag, sql.toString());
+                mTagQueryParameters.put(tag, parameters);
+
+                restore_status = true;
+            }
+
+            restoring_cursor.close();
+        }
+
+        // Executes query
         long id = mSQLiteDatabase.insertWithOnConflict(
                 table,
                 nullColumnHack,
@@ -185,16 +261,9 @@ public class RestorableSQLiteDatabase {
                 conflictAlgorithm
         );
 
-        if (id != -1) {
-            StringBuilder restoring_query = new StringBuilder();
-
-            restoring_query.append("DELETE FROM ");
-            restoring_query.append(table);
-            restoring_query.append(" WHERE ");
-            restoring_query.append(ROWID);
-            restoring_query.append(" = ?");
-
-            mTagQueryTable.put(tag, restoring_query.toString());
+        // Generates query to restore insertion
+        if (id != -1 && !restore_status) {
+            mTagQueryTable.put(tag, "DELETE FROM " + table + " WHERE " + ROWID + " = ?");
             mTagQueryParameters.put(tag, new String[] {id + ""});
         }
 
