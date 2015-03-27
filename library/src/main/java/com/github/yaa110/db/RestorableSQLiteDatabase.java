@@ -3,6 +3,7 @@ package com.github.yaa110.db;
 import android.content.ContentValues;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteStatement;
 import android.util.Log;
 
 /**
@@ -11,10 +12,32 @@ import android.util.Log;
  */
 public class RestorableSQLiteDatabase {
 
+    private static RestorableSQLiteDatabase mInstance = null;
     private SQLiteDatabase mSQLiteDatabase;
     private static final String TAG = "SQLiteDatabase";
 
-    public RestorableSQLiteDatabase() {}
+    public static RestorableSQLiteDatabase getInstance(SQLiteDatabase mSQLiteDatabase){
+        if(mInstance == null)
+        {
+            mInstance = new RestorableSQLiteDatabase(mSQLiteDatabase);
+        }
+        return mInstance;
+    }
+
+    /**
+     * private constructor of singleton pattern
+     * @param mSQLiteDatabase the instance of SQLiteDatabase to be wrapped
+     */
+    private RestorableSQLiteDatabase(SQLiteDatabase mSQLiteDatabase) {
+        this.mSQLiteDatabase = mSQLiteDatabase;
+    }
+
+    /**
+     * @return the wrapped SQLiteDatabase instance
+     */
+    public SQLiteDatabase getSQLiteDatabase() {
+        return mSQLiteDatabase;
+    }
 
     /**
      * Convenience method for inserting a row into the database.
