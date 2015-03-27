@@ -11,6 +11,7 @@ import java.util.Hashtable;
  * A wrapper to replicate the `SQLiteDatabase` class to manage a SQLite database with restoring capability.
  * This wrapper makes it possible to undo changes made after execution of SQL commands.
  */
+@SuppressWarnings("UnusedDeclaration")
 public class RestorableSQLiteDatabase {
 
     private static RestorableSQLiteDatabase mInstance = null;
@@ -18,7 +19,7 @@ public class RestorableSQLiteDatabase {
     private static final String TAG = "SQLiteDatabase";
 
     /**
-     * The hash table to map the tag of a restoring to its statement query
+     * The hash table to map the tag of a restoring statement to its query
      */
     public Hashtable<String, String> mTagQueryTable;
 
