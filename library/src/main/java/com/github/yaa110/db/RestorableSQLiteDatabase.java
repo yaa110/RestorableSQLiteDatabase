@@ -422,6 +422,80 @@ public class RestorableSQLiteDatabase {
         );
     }
 
-    // TODO rwaQueries, executions, update and delete restoring: http://grepcode.com/file/repo1.maven.org/maven2/org.robolectric/android-all/5.0.0_r2-robolectric-0/android/database/sqlite/SQLiteDatabase.java
+    /**
+     * Use the {@link android.database.sqlite.SQLiteDatabase#delete(String, String, String[]) delete} method.
+     * @param tag The tag to be mapped to the restoring query.
+     * @throws IllegalArgumentException if the tag is null.
+     */
+    public int delete(String table, String whereClause, String[] whereArgs, String tag) {
+        if (tag == null)
+            throw new IllegalArgumentException("The tag must not be null.");
+
+        // Gets all affected_rows
+        Cursor restoring_cursor = mSQLiteDatabase.query(
+                table,
+                null,
+                whereClause,
+                whereArgs,
+                null,
+                null,
+                null
+        );
+
+        ArrayList<String> queries = new ArrayList<>();
+        ArrayList<String[]> queriesParameters = new ArrayList<>();
+
+        // Generates restoring queries
+        while (restoring_cursor.moveToNext()) {
+            StringBuilder sql = new StringBuilder();
+            sql.append("INSERT OR REPLACE INTO ");
+            sql.append(table);
+
+            int i = 0;
+            String[] parameters = new String[restoring_cursor.getColumnCount()];
+
+            StringBuilder sql_columns = new StringBuilder();
+            StringBuilder sql_values = new StringBuilder();
+
+            for (String columnName : restoring_cursor.getColumnNames()) {
+                if (i > 0) {
+                    sql_columns.append(", ");
+                    sql_values.append(", ");
+                } else {
+                    sql_columns.append(" (");
+                    sql_values.append(" (");
+                }
+
+                sql_columns.append(columnName);
+                sql_values.append("?");
+                parameters[i] = restoring_cursor.getString(restoring_cursor.getColumnIndex(columnName));
+
+                i++;
+            }
+
+            sql_columns.append(")");
+            sql_values.append(")");
+
+            sql.append(sql_columns.toString());
+            sql.append(" VALUES ");
+            sql.append(sql_values.toString());
+
+            queries.add(sql.toString());
+            queriesParameters.add(parameters);
+        }
+
+        restoring_cursor.close();
+
+        mTagQueryTable.put(tag, queries);
+        mTagQueryParameters.put(tag, queriesParameters);
+
+        return mSQLiteDatabase.delete(
+                table,
+                whereClause,
+                whereArgs
+        );
+    }
+
+    // TODO rwaQueries, executions and delete restoring: http://grepcode.com/file/repo1.maven.org/maven2/org.robolectric/android-all/5.0.0_r2-robolectric-0/android/database/sqlite/SQLiteDatabase.java
 
 }
