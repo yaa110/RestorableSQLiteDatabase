@@ -1,14 +1,26 @@
 package com.github.yaa110.db;
 
+import android.annotation.TargetApi;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.os.Build;
+import android.os.CancellationSignal;
 import android.util.Log;
+
+import net.sf.jsqlparser.JSQLParserException;
+import net.sf.jsqlparser.parser.CCJSqlParserUtil;
+import net.sf.jsqlparser.statement.Statement;
+import net.sf.jsqlparser.statement.delete.Delete;
+import net.sf.jsqlparser.statement.insert.Insert;
+import net.sf.jsqlparser.statement.replace.Replace;
+import net.sf.jsqlparser.statement.update.Update;
 
 import java.util.ArrayList;
 import java.util.Hashtable;
+import java.util.Locale;
 import java.util.Set;
 
 /**
@@ -496,20 +508,83 @@ public class RestorableSQLiteDatabase {
         );
     }
 
-    // TODO rwaQueries, executions restoring: http://grepcode.com/file/repo1.maven.org/maven2/org.robolectric/android-all/5.0.0_r2-robolectric-0/android/database/sqlite/SQLiteDatabase.java
-
     /**
      * Use the {@link android.database.sqlite.SQLiteDatabase#rawQuery(String, String[]) rawQuery} method.
+     * This method uses {@link net.sf.jsqlparser.parser.CCJSqlParserUtil#parse(String) parser} method to parse the SQL query.
      * @param tag The tag to be mapped to the restoring query.
      * @throws IllegalArgumentException if the tag is null.
      */
-    public Cursor rawQuery(String sql, String[] selectionArgs, String tag) {
+    public Cursor rawQuery(String sql, String[] selectionArgs, String tag)
+            throws JSQLParserException, ClassCastException {
         if (tag == null)
             throw new IllegalArgumentException("The tag must not be null.");
 
-        // TODO
-
+        generateRawRestoringQuery(sql, selectionArgs, tag);
         return mSQLiteDatabase.rawQuery(sql, selectionArgs);
+    }
+
+    /**
+     * Use the {@link android.database.sqlite.SQLiteDatabase#rawQuery(String, String[]) rawQuery} method.
+     * This method uses {@link net.sf.jsqlparser.parser.CCJSqlParserUtil#parse(String) parser} method to parse the SQL query.
+     * @param tag The tag to be mapped to the restoring query.
+     * @throws IllegalArgumentException if the tag is null.
+     */
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
+    public Cursor rawQuery(String sql, String[] selectionArgs,
+                           CancellationSignal cancellationSignal, String tag)
+            throws JSQLParserException, ClassCastException {
+        if (tag == null)
+            throw new IllegalArgumentException("The tag must not be null.");
+
+        generateRawRestoringQuery(sql, selectionArgs, tag);
+        return mSQLiteDatabase.rawQuery(sql, selectionArgs, cancellationSignal);
+    }
+
+    /**
+     * Generates the restoring query of rawQuery methods.
+     * @param sql the SQL query.
+     * @param selectionArgs arguments to be replaced with ? in the SQL query.
+     * @throws JSQLParserException
+     */
+    private void generateRawRestoringQuery(String sql, String[] selectionArgs, String tag)
+            throws JSQLParserException, ClassCastException {
+
+        Statement statement = CCJSqlParserUtil.parse(sql);
+        String table = null;
+        String where = null;
+
+        if (sql.toLowerCase(Locale.getDefault()).contains("insert into")) {
+
+            Insert insertStatement = (Insert) statement;
+            table = insertStatement.getTable().getName();
+            // TODO
+
+        } else if (sql.toLowerCase(Locale.getDefault()).contains("replace")) {
+
+            Replace replaceStatement = (Replace) statement;
+            table = replaceStatement.getTable().getName();
+            // TODO
+
+        } else if (sql.toLowerCase(Locale.getDefault()).contains("update")) {
+
+            Update updateStatement = (Update) statement;
+            table = updateStatement.getTables().get(0).getName();
+            // TODO
+
+        } else if (sql.toLowerCase(Locale.getDefault()).contains("delete")) {
+
+            Delete deleteStatement = (Delete) statement;
+            table = deleteStatement.getTable().getName();
+            // TODO
+
+        }
+
+        Delete selectStatement = (Delete) statement;
+
+        Log.i("TEST", "Table: " + selectStatement.getTable());
+        Log.i("TEST", "Where: " + selectStatement.getWhere());
+
+        // TODO
     }
 
     /**
