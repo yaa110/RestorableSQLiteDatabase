@@ -58,6 +58,26 @@ public class RestorableSQLiteDatabase {
     }
 
     /**
+     * Singleton pattern constructor to force this to renew the instance. Do not use this constructor, if you do not want to change the database.
+     * @param mSQLiteDatabase the instance of the SQLiteDatabase to be wrapped.
+     * @return an instance of this class.
+     */
+    public static RestorableSQLiteDatabase getNewInstance(SQLiteDatabase mSQLiteDatabase){
+        mInstance = new RestorableSQLiteDatabase(mSQLiteDatabase);
+        return mInstance;
+    }
+
+    /**
+     * Singleton pattern constructor to force this to renew the instance. Do not use this constructor, if you do not want to change the database.
+     * @param helper the instance of the SQLiteOpenHelper to open a database using {@link android.database.sqlite.SQLiteOpenHelper#getWritableDatabase() getWritableDatabase} method.
+     * @return an instance of this class.
+     */
+    public static RestorableSQLiteDatabase getNewInstance(SQLiteOpenHelper helper){
+        mInstance = new RestorableSQLiteDatabase(helper);
+        return mInstance;
+    }
+
+    /**
      * Private constructor of singleton pattern.
      * @param mSQLiteDatabase the instance of the SQLiteDatabase to be wrapped.
      */
@@ -128,11 +148,27 @@ public class RestorableSQLiteDatabase {
     }
 
     /**
-     * Returns the parameters map.
-     * @return the parameters map.
+     * Returns the parameters hash table.
+     * @return the parameters hash table.
      */
     public Hashtable<String, ArrayList<String[]>> getTagQueryParameters() {
         return mTagQueryParameters;
+    }
+
+    /**
+     * Changes the hash table.
+     * @param tagQueryTable the substitute hash table.
+     */
+    public void setTagQueryTable(Hashtable<String, ArrayList<String>> tagQueryTable) {
+        this.mTagQueryTable = tagQueryTable;
+    }
+
+    /**
+     * Changes the parameters hash table.
+     * @param tagQueryParameters the substitute hash table.
+     */
+    public void setTagQueryParameters(Hashtable<String, ArrayList<String[]>> tagQueryParameters) {
+        this.mTagQueryParameters = tagQueryParameters;
     }
 
     /**
