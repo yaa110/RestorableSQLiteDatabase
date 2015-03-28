@@ -500,42 +500,68 @@ public class RestorableSQLiteDatabase {
 
     /**
      * Restores all restoring queries.
+     * @return possible number of restored queries to which tag is mapped.
      */
-    public void restoreAll() {
-        restore(mTagQueryTable.keySet());
+    public int restoreAll() {
+        return restore(mTagQueryTable.keySet());
     }
 
     /**
      * Restores the queries to which each tag is mapped.
      * @param tags an array of tags mapped to restoring queries.
+     * @return possible number of restored queries to which tag is mapped.
      */
-    public void restore(String[] tags) {
+    public int restore(String[] tags) {
+        int restored_queries = 0;
+
         for (String tag : tags) {
-            restore(tag);
+            restored_queries += restore(tag);
         }
+
+        return restored_queries;
     }
 
     /**
      * Restores the queries to which each tag is mapped.
      * @param tags a set of tags mapped to restoring queries.
+     * @return possible number of restored queries to which tag is mapped.
      */
-    public void restore(Set<String> tags) {
+    public int restore(Set<String> tags) {
+        int restored_queries = 0;
+
         for (String tag : tags) {
-            restore(tag);
+            restored_queries += restore(tag);
         }
+
+        return restored_queries;
     }
 
     /**
      * Restores the queries to which the tag is mapped.
      * @param tag the tag mapped to restoring queries.
+     * @return possible number of restored queries to which tag is mapped.
      */
-    public void restore(String tag) {
+    public int restore(String tag) {
         ArrayList<String> queries = mTagQueryTable.get(tag);
         ArrayList<String[]> parameters = mTagQueryParameters.get(tag);
 
         if (queries != null && parameters != null) {
-            // TODO
+            int restored_queries = queries.size();
+
+            for (int i = 0; i < restored_queries; i++) {
+                mSQLiteDatabase.rawQuery(
+                        queries.get(i),
+                        parameters.get(i)
+                );
+            }
+
+            mTagQueryTable.remove(tag);
+            mTagQueryParameters.remove(tag);
+
+            return restored_queries;
         }
+
+        return 0;
     }
 
 
