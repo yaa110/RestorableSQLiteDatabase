@@ -7,7 +7,6 @@ import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Set;
 
@@ -18,7 +17,6 @@ import java.util.Set;
 @SuppressWarnings("UnusedDeclaration")
 public class RestorableSQLiteDatabase {
 
-    private static RestorableSQLiteDatabase mInstance = null;
     private SQLiteDatabase mSQLiteDatabase;
     private static final String TAG = "SQLiteDatabase";
     private static final String ROWID = "rowid";
@@ -31,22 +29,15 @@ public class RestorableSQLiteDatabase {
     /**
      * Maps a tag to the parameters should be used in the queries.
      */
-    public HashMap<String, ArrayList<String[]>> mTagQueryParameters;
-
-    public static RestorableSQLiteDatabase getInstance(SQLiteDatabase mSQLiteDatabase){
-        if(mInstance == null) {
-            mInstance = new RestorableSQLiteDatabase(mSQLiteDatabase);
-        }
-        return mInstance;
-    }
+    public Hashtable<String, ArrayList<String[]>> mTagQueryParameters;
 
     /**
      * Private constructor of singleton pattern.
      * @param mSQLiteDatabase the instance of the SQLiteDatabase to be wrapped.
      */
-    private RestorableSQLiteDatabase(SQLiteDatabase mSQLiteDatabase) {
+    public RestorableSQLiteDatabase(SQLiteDatabase mSQLiteDatabase) {
         mTagQueryTable = new Hashtable<>();
-        mTagQueryParameters = new HashMap<>();
+        mTagQueryParameters = new Hashtable<>();
         this.mSQLiteDatabase = mSQLiteDatabase;
     }
 
@@ -104,7 +95,7 @@ public class RestorableSQLiteDatabase {
      * Returns the parameters map.
      * @return the parameters map.
      */
-    public HashMap<String, ArrayList<String[]>> getTagQueryParameters() {
+    public Hashtable<String, ArrayList<String[]>> getTagQueryParameters() {
         return mTagQueryParameters;
     }
 
@@ -251,9 +242,6 @@ public class RestorableSQLiteDatabase {
                 queries.add(sql.toString());
                 queriesParameters.add(parameters);
 
-                mTagQueryTable.put(tag, queries);
-                mTagQueryParameters.put(tag, queriesParameters);
-
                 restore_status = true;
             }
 
@@ -269,10 +257,13 @@ public class RestorableSQLiteDatabase {
         );
 
         // Generates query to restore insertion
-        if (id != -1 && !restore_status) {
+        if (!restore_status) {
             queries.add("DELETE FROM " + table + " WHERE " + ROWID + " = ?");
             queriesParameters.add(new String[] {id + ""});
+        }
 
+        // Add queries and their parameters if no error has occurred
+        if (id != -1) {
             mTagQueryTable.put(tag, queries);
             mTagQueryParameters.put(tag, queriesParameters);
         }
