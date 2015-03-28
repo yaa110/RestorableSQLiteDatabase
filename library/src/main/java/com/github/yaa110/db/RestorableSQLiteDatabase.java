@@ -559,22 +559,18 @@ public class RestorableSQLiteDatabase {
             table = insertStatement.getTable().getName();
             // TODO
 
-        } else if (sql.toLowerCase(Locale.getDefault()).contains("replace")) {
-
-            Replace replaceStatement = (Replace) statement;
-            table = replaceStatement.getTable().getName();
-            // TODO
-
         } else if (sql.toLowerCase(Locale.getDefault()).contains("update")) {
 
             Update updateStatement = (Update) statement;
             table = updateStatement.getTables().get(0).getName();
+            where = updateStatement.getWhere().toString();
             // TODO
 
         } else if (sql.toLowerCase(Locale.getDefault()).contains("delete")) {
 
             Delete deleteStatement = (Delete) statement;
             table = deleteStatement.getTable().getName();
+            where = deleteStatement.getWhere().toString();
             // TODO
 
         }
