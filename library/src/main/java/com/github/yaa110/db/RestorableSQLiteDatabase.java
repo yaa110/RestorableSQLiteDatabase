@@ -519,8 +519,19 @@ public class RestorableSQLiteDatabase {
         if (tag == null)
             throw new IllegalArgumentException("The tag must not be null.");
 
-        generateRawRestoringQuery(sql, selectionArgs, tag);
-        return mSQLiteDatabase.rawQuery(sql, selectionArgs);
+        Statement statement = CCJSqlParserUtil.parse(sql);
+
+        generateRawUpdateDeleteQuery(statement, sql, selectionArgs, tag);
+
+        Cursor cursor =  mSQLiteDatabase.rawQuery(sql, selectionArgs);
+
+        if (sql.toLowerCase(Locale.getDefault()).contains("insert into")) {
+            Insert insertStatement = (Insert) statement;
+            String table = insertStatement.getTable().getName();
+            generateInsertRawQuery(cursor, table, tag);
+        }
+
+        return cursor;
     }
 
     /**
@@ -536,8 +547,19 @@ public class RestorableSQLiteDatabase {
         if (tag == null)
             throw new IllegalArgumentException("The tag must not be null.");
 
-        generateRawRestoringQuery(sql, selectionArgs, tag);
-        return mSQLiteDatabase.rawQuery(sql, selectionArgs, cancellationSignal);
+        Statement statement = CCJSqlParserUtil.parse(sql);
+
+        generateRawUpdateDeleteQuery(statement, sql, selectionArgs, tag);
+
+        Cursor cursor = mSQLiteDatabase.rawQuery(sql, selectionArgs, cancellationSignal);
+
+        if (sql.toLowerCase(Locale.getDefault()).contains("insert into")) {
+            Insert insertStatement = (Insert) statement;
+            String table = insertStatement.getTable().getName();
+            generateInsertRawQuery(cursor, table, tag);
+        }
+
+        return cursor;
     }
 
     /**
@@ -546,20 +568,13 @@ public class RestorableSQLiteDatabase {
      * @param selectionArgs arguments to be replaced with ? in the SQL query.
      * @throws JSQLParserException
      */
-    private void generateRawRestoringQuery(String sql, String[] selectionArgs, String tag)
+    private void generateRawUpdateDeleteQuery(Statement statement, String sql, String[] selectionArgs, String tag)
             throws JSQLParserException, ClassCastException {
 
-        Statement statement = CCJSqlParserUtil.parse(sql);
         String table = null;
         String where = null;
 
-        if (sql.toLowerCase(Locale.getDefault()).contains("insert into")) {
-
-            Insert insertStatement = (Insert) statement;
-            table = insertStatement.getTable().getName();
-            // TODO
-
-        } else if (sql.toLowerCase(Locale.getDefault()).contains("update")) {
+        if (sql.toLowerCase(Locale.getDefault()).contains("update")) {
 
             Update updateStatement = (Update) statement;
             table = updateStatement.getTables().get(0).getName();
@@ -574,6 +589,11 @@ public class RestorableSQLiteDatabase {
             // TODO
 
         }
+    }
+
+    private void generateInsertRawQuery(Cursor cursor, String table, String tag)
+            throws JSQLParserException, ClassCastException {
+        // TODO
     }
 
     /**
