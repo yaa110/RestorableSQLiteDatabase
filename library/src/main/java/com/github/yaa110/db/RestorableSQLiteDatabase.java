@@ -4,6 +4,7 @@ import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
 import java.util.ArrayList;
@@ -17,6 +18,7 @@ import java.util.Set;
 @SuppressWarnings("UnusedDeclaration")
 public class RestorableSQLiteDatabase {
 
+    private static RestorableSQLiteDatabase mInstance = null;
     private SQLiteDatabase mSQLiteDatabase;
     private static final String TAG = "SQLiteDatabase";
     private static final String ROWID = "rowid";
@@ -27,18 +29,52 @@ public class RestorableSQLiteDatabase {
     public Hashtable<String, ArrayList<String>> mTagQueryTable;
 
     /**
-     * Maps a tag to the parameters should be used in the queries.
+     * The hash table to map a tag to the parameters should be used in the queries.
      */
     public Hashtable<String, ArrayList<String[]>> mTagQueryParameters;
+
+    /**
+     * Singleton pattern constructor
+     * @param mSQLiteDatabase the instance of the SQLiteDatabase to be wrapped.
+     * @return an instance of this class.
+     */
+    public static RestorableSQLiteDatabase getInstance(SQLiteDatabase mSQLiteDatabase){
+        if(mInstance == null) {
+            mInstance = new RestorableSQLiteDatabase(mSQLiteDatabase);
+        }
+        return mInstance;
+    }
+
+    /**
+     * Singleton pattern constructor.
+     * @param helper the instance of the SQLiteOpenHelper to open a database using {@link android.database.sqlite.SQLiteOpenHelper#getWritableDatabase() getWritableDatabase} method.
+     * @return an instance of this class.
+     */
+    public static RestorableSQLiteDatabase getInstance(SQLiteOpenHelper helper){
+        if(mInstance == null) {
+            mInstance = new RestorableSQLiteDatabase(helper);
+        }
+        return mInstance;
+    }
 
     /**
      * Private constructor of singleton pattern.
      * @param mSQLiteDatabase the instance of the SQLiteDatabase to be wrapped.
      */
-    public RestorableSQLiteDatabase(SQLiteDatabase mSQLiteDatabase) {
+    private RestorableSQLiteDatabase(SQLiteDatabase mSQLiteDatabase) {
         mTagQueryTable = new Hashtable<>();
         mTagQueryParameters = new Hashtable<>();
         this.mSQLiteDatabase = mSQLiteDatabase;
+    }
+
+    /**
+     * Private constructor of singleton pattern.
+     * @param helper the instance of the SQLiteOpenHelper to open a database using {@link android.database.sqlite.SQLiteOpenHelper#getWritableDatabase() getWritableDatabase} method.
+     */
+    private RestorableSQLiteDatabase(SQLiteOpenHelper helper) {
+        mTagQueryTable = new Hashtable<>();
+        mTagQueryParameters = new Hashtable<>();
+        this.mSQLiteDatabase = helper.getWritableDatabase();
     }
 
     /**
@@ -270,6 +306,8 @@ public class RestorableSQLiteDatabase {
 
         return id;
     }
+
+
 
     // TODO rwaQueries, executions, update and delete restoring: http://grepcode.com/file/repo1.maven.org/maven2/org.robolectric/android-all/5.0.0_r2-robolectric-0/android/database/sqlite/SQLiteDatabase.java
 
