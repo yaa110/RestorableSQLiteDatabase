@@ -578,13 +578,6 @@ public class RestorableSQLiteDatabase {
             // TODO
 
         }
-
-        Delete selectStatement = (Delete) statement;
-
-        Log.i("TEST", "Table: " + selectStatement.getTable());
-        Log.i("TEST", "Where: " + selectStatement.getWhere());
-
-        // TODO
     }
 
     /**
