@@ -12,7 +12,7 @@ import java.util.Hashtable;
 import java.util.Set;
 
 /**
- * A wrapper to replicate the `SQLiteDatabase` class to manage a SQLite database with restoring capability.
+ * A wrapper to replicate android's SQLiteDatabase class to manage a SQLite database with restoring capability.
  * This wrapper makes it possible to undo changes made after execution of SQL commands.
  */
 @SuppressWarnings("UnusedDeclaration")
@@ -343,7 +343,84 @@ public class RestorableSQLiteDatabase {
         return id;
     }
 
+    /**
+     * Use the {@link android.database.sqlite.SQLiteDatabase#update(String, android.content.ContentValues, String, String[]) update} method.
+     * @param tag The tag to be mapped to the restoring query.
+     * @throws IllegalArgumentException if the tag is null.
+     */
+    public int update(String table, ContentValues values, String whereClause, String[] whereArgs, String tag) {
+        if (tag == null)
+            throw new IllegalArgumentException("The tag must not be null.");
 
+        return updateWithOnConflict(table, values, whereClause, whereArgs, SQLiteDatabase.CONFLICT_NONE, tag);
+    }
+
+    /**
+     * Use the {@link android.database.sqlite.SQLiteDatabase#updateWithOnConflict(String, android.content.ContentValues, String, String[], int) updateWithOnConflict} method.
+     * @param tag The tag to be mapped to the restoring query.
+     * @throws IllegalArgumentException if the tag is null.
+     */
+    public int updateWithOnConflict(String table, ContentValues values,
+                                    String whereClause, String[] whereArgs, int conflictAlgorithm, String tag) {
+        if (tag == null)
+            throw new IllegalArgumentException("The tag must not be null.");
+
+        // Gets all affected_rows
+        Cursor restoring_cursor = mSQLiteDatabase.query(
+                table,
+                null,
+                whereClause,
+                whereArgs,
+                null,
+                null,
+                null
+        );
+
+        ArrayList<String> queries = new ArrayList<>();
+        ArrayList<String[]> queriesParameters = new ArrayList<>();
+
+        // Generates restoring queries
+        while (restoring_cursor.moveToNext()) {
+            StringBuilder sql = new StringBuilder();
+            sql.append("UPDATE ");
+            sql.append(table);
+            sql.append(" SET ");
+
+            int i = 0;
+            String[] parameters = new String[restoring_cursor.getColumnCount() + 1];
+
+            for (String columnName : restoring_cursor.getColumnNames()) {
+                if (i > 0) sql.append(", ");
+
+                sql.append(columnName);
+                sql.append(" = ?");
+                parameters[i] = restoring_cursor.getString(restoring_cursor.getColumnIndex(columnName));
+
+                i++;
+            }
+
+            sql.append(" WHERE ");
+            sql.append(ROWID);
+            sql.append(" = ?");
+            parameters[i] = restoring_cursor.getString(restoring_cursor.getColumnIndex(ROWID));
+
+            queries.add(sql.toString());
+            queriesParameters.add(parameters);
+        }
+
+        restoring_cursor.close();
+
+        mTagQueryTable.put(tag, queries);
+        mTagQueryParameters.put(tag, queriesParameters);
+
+        return mSQLiteDatabase.updateWithOnConflict(
+                table,
+                values,
+                whereClause,
+                whereArgs,
+                conflictAlgorithm
+        );
+    }
 
     // TODO rwaQueries, executions, update and delete restoring: http://grepcode.com/file/repo1.maven.org/maven2/org.robolectric/android-all/5.0.0_r2-robolectric-0/android/database/sqlite/SQLiteDatabase.java
 
