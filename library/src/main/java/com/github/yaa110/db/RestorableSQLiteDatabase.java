@@ -496,6 +496,47 @@ public class RestorableSQLiteDatabase {
         );
     }
 
-    // TODO rwaQueries, executions and delete restoring: http://grepcode.com/file/repo1.maven.org/maven2/org.robolectric/android-all/5.0.0_r2-robolectric-0/android/database/sqlite/SQLiteDatabase.java
+    // TODO rwaQueries, executions restoring: http://grepcode.com/file/repo1.maven.org/maven2/org.robolectric/android-all/5.0.0_r2-robolectric-0/android/database/sqlite/SQLiteDatabase.java
+
+    /**
+     * Restores all restoring queries.
+     */
+    public void restoreAll() {
+        restore(mTagQueryTable.keySet());
+    }
+
+    /**
+     * Restores the queries to which each tag is mapped.
+     * @param tags an array of tags mapped to restoring queries.
+     */
+    public void restore(String[] tags) {
+        for (String tag : tags) {
+            restore(tag);
+        }
+    }
+
+    /**
+     * Restores the queries to which each tag is mapped.
+     * @param tags a set of tags mapped to restoring queries.
+     */
+    public void restore(Set<String> tags) {
+        for (String tag : tags) {
+            restore(tag);
+        }
+    }
+
+    /**
+     * Restores the queries to which the tag is mapped.
+     * @param tag the tag mapped to restoring queries.
+     */
+    public void restore(String tag) {
+        ArrayList<String> queries = mTagQueryTable.get(tag);
+        ArrayList<String[]> parameters = mTagQueryParameters.get(tag);
+
+        if (queries != null && parameters != null) {
+            // TODO
+        }
+    }
+
 
 }
