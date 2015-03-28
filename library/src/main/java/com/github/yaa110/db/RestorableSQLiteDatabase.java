@@ -5,6 +5,7 @@ import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.os.CancellationSignal;
 import android.util.Log;
 
 import java.util.ArrayList;
@@ -499,6 +500,20 @@ public class RestorableSQLiteDatabase {
     // TODO rwaQueries, executions restoring: http://grepcode.com/file/repo1.maven.org/maven2/org.robolectric/android-all/5.0.0_r2-robolectric-0/android/database/sqlite/SQLiteDatabase.java
 
     /**
+     * Use the {@link android.database.sqlite.SQLiteDatabase#rawQuery(String, String[]) rawQuery} method.
+     * @param tag The tag to be mapped to the restoring query.
+     * @throws IllegalArgumentException if the tag is null.
+     */
+    public Cursor rawQuery(String sql, String[] selectionArgs, String tag) {
+        if (tag == null)
+            throw new IllegalArgumentException("The tag must not be null.");
+
+        // TODO
+
+        return mSQLiteDatabase.rawQuery(sql, selectionArgs);
+    }
+
+    /**
      * Restores all restoring queries.
      * @return possible number of restored queries to which tag is mapped.
      */
@@ -563,6 +578,5 @@ public class RestorableSQLiteDatabase {
 
         return 0;
     }
-
 
 }
