@@ -50,12 +50,12 @@ public class RestorableSQLiteDatabase {
     private HashMap<String, String> mTableRowid;
 
     /**
-     * Singleton pattern constructor
+     * Constructs a new instance of the RestorableSQLiteDatabase only if no instance is constructed.
      * @param mSQLiteDatabase the instance of the SQLiteDatabase to be wrapped.
      * @param tableRowid maps the table name to its ROWID column name.
      * @return an instance of this class.
      */
-    public static RestorableSQLiteDatabase getInstance(SQLiteDatabase mSQLiteDatabase, HashMap<String, String> tableRowid){
+    public static RestorableSQLiteDatabase getInstance(SQLiteDatabase mSQLiteDatabase, HashMap<String, String> tableRowid) {
         if(mInstance == null) {
             mInstance = new RestorableSQLiteDatabase(mSQLiteDatabase, tableRowid);
         }
@@ -63,12 +63,12 @@ public class RestorableSQLiteDatabase {
     }
 
     /**
-     * Singleton pattern constructor.
+     * Constructs a new instance of the RestorableSQLiteDatabase only if no instance is constructed.
      * @param helper the instance of the SQLiteOpenHelper to open a database using {@link android.database.sqlite.SQLiteOpenHelper#getWritableDatabase() getWritableDatabase} method.
      * @param tableRowid maps the table name to its ROWID column name.
      * @return an instance of this class.
      */
-    public static <T extends SQLiteOpenHelper> RestorableSQLiteDatabase getInstance(T helper, HashMap<String, String> tableRowid){
+    public static <T extends SQLiteOpenHelper> RestorableSQLiteDatabase getInstance(T helper, HashMap<String, String> tableRowid) {
         if(mInstance == null) {
             mInstance = new RestorableSQLiteDatabase(helper, tableRowid);
         }
@@ -76,23 +76,23 @@ public class RestorableSQLiteDatabase {
     }
 
     /**
-     * Singleton pattern constructor to force this to renew the instance. Do not use this constructor, if you do not want to change the database.
+     * Constructs a new instance of the RestorableSQLiteDatabase.
      * @param mSQLiteDatabase the instance of the SQLiteDatabase to be wrapped.
      * @param tableRowid maps the table name to its ROWID column name.
      * @return an instance of this class.
      */
-    public static RestorableSQLiteDatabase getNewInstance(SQLiteDatabase mSQLiteDatabase, HashMap<String, String> tableRowid){
+    public static RestorableSQLiteDatabase getNewInstance(SQLiteDatabase mSQLiteDatabase, HashMap<String, String> tableRowid) {
         mInstance = new RestorableSQLiteDatabase(mSQLiteDatabase, tableRowid);
         return mInstance;
     }
 
     /**
-     * Singleton pattern constructor to force this to renew the instance. Do not use this constructor, if you do not want to change the database.
+     * Constructs a new instance of the RestorableSQLiteDatabase.
      * @param helper the instance of the SQLiteOpenHelper to open a database using {@link android.database.sqlite.SQLiteOpenHelper#getWritableDatabase() getWritableDatabase} method.
      * @param tableRowid maps the table name to its ROWID column name.
      * @return an instance of this class.
      */
-    public static <T extends SQLiteOpenHelper> RestorableSQLiteDatabase getNewInstance(T helper, HashMap<String, String> tableRowid){
+    public static <T extends SQLiteOpenHelper> RestorableSQLiteDatabase getNewInstance(T helper, HashMap<String, String> tableRowid) {
         mInstance = new RestorableSQLiteDatabase(helper, tableRowid);
         return mInstance;
     }
@@ -131,7 +131,7 @@ public class RestorableSQLiteDatabase {
 
     /**
      * Checks if the hash table contains the tag.
-     * @param tag Possible tag of restoring query.
+     * @param tag possible tag of restoring query.
      * @return true if the hash table contains the tag; false otherwise.
      * @throws IllegalArgumentException if the tag is null.
      */
@@ -152,7 +152,7 @@ public class RestorableSQLiteDatabase {
 
     /**
      * Provides the query to which the tag is mapped.
-     * @param tag Possible tag of restoring queries.
+     * @param tag possible tag of restoring queries.
      * @throws IllegalArgumentException if the tag is null.
      * @return the queries to which the tag is mapped, or null if the hash table contains no mapping for the tag.
      */
@@ -164,7 +164,7 @@ public class RestorableSQLiteDatabase {
     }
 
     /**
-     * Returns the hash table.
+     * Provides the hash table.
      * @return the hash table.
      */
     public Hashtable<String, ArrayList<String>> getTagQueryTable() {
@@ -172,7 +172,7 @@ public class RestorableSQLiteDatabase {
     }
 
     /**
-     * Returns the parameters hash table.
+     * Provides the parameters hash table.
      * @return the parameters hash table.
      */
     public Hashtable<String, ArrayList<String[]>> getTagQueryParameters() {
@@ -197,7 +197,7 @@ public class RestorableSQLiteDatabase {
 
     /**
      * Use the {@link android.database.sqlite.SQLiteDatabase#insert(String, String, android.content.ContentValues) insert} method.
-     * @param tag The tag to be mapped to the restoring query.
+     * @param tag the tag to be mapped to the restoring query.
      * @throws IllegalArgumentException if the tag is null.
      */
     public long insert(String table, String nullColumnHack, ContentValues values, String tag) {
@@ -409,6 +409,7 @@ public class RestorableSQLiteDatabase {
     /**
      * Use the {@link android.database.sqlite.SQLiteDatabase#rawQuery(String, String[]) rawQuery} method.
      * This method uses {@link net.sf.jsqlparser.parser.CCJSqlParserUtil#parse(String) parser} method to parse the SQL query.
+     * Unlike the rawQuery of the SQLiteDatabase, there is no need to call the moveToFirst method of the returned Cursor to apply SQL query.
      * @param tag The tag to be mapped to the restoring query.
      * @throws IllegalArgumentException if the tag is null.
      */
@@ -436,6 +437,7 @@ public class RestorableSQLiteDatabase {
     /**
      * Use the {@link android.database.sqlite.SQLiteDatabase#rawQuery(String, String[]) rawQuery} method.
      * This method uses {@link net.sf.jsqlparser.parser.CCJSqlParserUtil#parse(String) parser} method to parse the SQL query.
+     * Unlike the rawQuery of the SQLiteDatabase, there is no need to call the moveToFirst method of the returned Cursor to apply SQL query.
      * @param tag The tag to be mapped to the restoring query.
      * @throws IllegalArgumentException if the tag is null.
      */
@@ -697,7 +699,7 @@ public class RestorableSQLiteDatabase {
     }
 
     /**
-     * Restores all restoring queries.
+     * Restores all restoring SQL queries.
      * @return possible number of restored queries to which tag is mapped.
      */
     public int restoreAll() {
@@ -706,7 +708,7 @@ public class RestorableSQLiteDatabase {
 
     /**
      * Restores the queries to which each tag is mapped.
-     * @param tags an array of tags mapped to restoring queries.
+     * @param tags an array of tags mapped to restoring SQL queries.
      * @return possible number of restored queries to which tag is mapped.
      */
     public int restore(String[] tags) {
@@ -721,7 +723,7 @@ public class RestorableSQLiteDatabase {
 
     /**
      * Restores the queries to which each tag is mapped.
-     * @param tags a set of tags mapped to restoring queries.
+     * @param tags a set of tags mapped to restoring SQL queries.
      * @return possible number of restored queries to which tag is mapped.
      */
     public int restore(Set<String> tags) {
@@ -735,7 +737,7 @@ public class RestorableSQLiteDatabase {
     }
 
     /**
-     * Restores the queries to which the tag is mapped.
+     * Restores the SQL queries to which the tag is mapped.
      * @param tag the tag mapped to restoring queries.
      * @return possible number of restored queries to which tag is mapped.
      */
@@ -764,9 +766,26 @@ public class RestorableSQLiteDatabase {
 
     /**
      * Use the {@link android.database.sqlite.SQLiteDatabase#close() close} method.
+     * Use the reopen methods to reopen the SQLite database.
      */
     public void close() {
         mSQLiteDatabase.close();
+    }
+
+    /**
+     * Reopens the SQLite database.
+     * @param helper the instance of the SQLiteOpenHelper to open a database using {@link android.database.sqlite.SQLiteOpenHelper#getWritableDatabase() getWritableDatabase} method.
+     */
+    public <T extends SQLiteOpenHelper> void reopen(T helper) {
+        mSQLiteDatabase = helper.getWritableDatabase();
+    }
+
+    /**
+     * Reopens the SQLite database.
+     * @param mSqLiteDatabase the instance of the SQLiteDatabase to be wrapped.
+     */
+    public void reopen(SQLiteDatabase mSqLiteDatabase) {
+        this.mSQLiteDatabase = mSqLiteDatabase;
     }
 
 }
