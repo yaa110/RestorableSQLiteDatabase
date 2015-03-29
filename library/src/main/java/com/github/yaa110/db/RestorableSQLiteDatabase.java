@@ -477,10 +477,21 @@ public class RestorableSQLiteDatabase {
             Update updateStatement = (Update) statement;
             table = updateStatement.getTables().get(0).getName();
             where = updateStatement.getWhere().toString();
+
+            // Generates selectionArgs for where
+            int argsNumberBeforeWhere = countOccurrences(sql.toLowerCase(Locale.getDefault()).substring(0, sql.toLowerCase(Locale.getDefault()).indexOf("where")), "?");
+            int argsNumberInWhere = countOccurrences(where, "?");
+
+            String[] whereArgs = new String[argsNumberInWhere];
+
+            for (int i = argsNumberBeforeWhere; i < argsNumberBeforeWhere + argsNumberInWhere; i++) {
+                whereArgs[i - argsNumberBeforeWhere] = selectionArgs[i];
+            }
+
             generateRestoringUpdate(
                     table,
                     where,
-                    selectionArgs,
+                    whereArgs,
                     tag
             );
 
@@ -489,13 +500,35 @@ public class RestorableSQLiteDatabase {
             Delete deleteStatement = (Delete) statement;
             table = deleteStatement.getTable().getName();
             where = deleteStatement.getWhere().toString();
+
+            // Generates selectionArgs for where
+            int argsNumberBeforeWhere = countOccurrences(sql.toLowerCase(Locale.getDefault()).substring(0, sql.toLowerCase(Locale.getDefault()).indexOf("where")), "?");
+            int argsNumberInWhere = countOccurrences(where, "?");
+
+            String[] whereArgs = new String[argsNumberInWhere];
+
+            for (int i = argsNumberBeforeWhere; i < argsNumberBeforeWhere + argsNumberInWhere; i++) {
+                whereArgs[i - argsNumberBeforeWhere] = selectionArgs[i];
+            }
+
             generateRestoringDelete(
                     table,
                     where,
-                    selectionArgs,
+                    whereArgs,
                     tag
             );
         }
+    }
+
+    /**
+     * Counts the number of occurrences of substring in the string.
+     * Reference: http://stackoverflow.com/a/23517296/1922137
+     * @param str the string to check.
+     * @param sub the substring to count.
+     * @return the number of occurrences of substring in the string.
+     */
+    private int countOccurrences(String str, String sub) {
+        return (str.length() - str.replace(sub, "").length()) / sub.length();
     }
 
     /**
