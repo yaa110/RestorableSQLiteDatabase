@@ -377,53 +377,12 @@ public class RestorableSQLiteDatabase {
         if (tag == null)
             throw new IllegalArgumentException("The tag must not be null.");
 
-        // Gets all affected_rows
-        Cursor restoring_cursor = mSQLiteDatabase.query(
+        generateRestoringUpdate(
                 table,
-                null,
                 whereClause,
                 whereArgs,
-                null,
-                null,
-                null
+                tag
         );
-
-        ArrayList<String> queries = new ArrayList<>();
-        ArrayList<String[]> queriesParameters = new ArrayList<>();
-
-        // Generates restoring queries
-        while (restoring_cursor.moveToNext()) {
-            StringBuilder sql = new StringBuilder();
-            sql.append("UPDATE ");
-            sql.append(table);
-            sql.append(" SET ");
-
-            int i = 0;
-            String[] parameters = new String[restoring_cursor.getColumnCount() + 1];
-
-            for (String columnName : restoring_cursor.getColumnNames()) {
-                if (i > 0) sql.append(", ");
-
-                sql.append(columnName);
-                sql.append(" = ?");
-                parameters[i] = restoring_cursor.getString(restoring_cursor.getColumnIndex(columnName));
-
-                i++;
-            }
-
-            sql.append(" WHERE ");
-            sql.append(ROWID);
-            sql.append(" = ?");
-            parameters[i] = restoring_cursor.getString(restoring_cursor.getColumnIndex(ROWID));
-
-            queries.add(sql.toString());
-            queriesParameters.add(parameters);
-        }
-
-        restoring_cursor.close();
-
-        mTagQueryTable.put(tag, queries);
-        mTagQueryParameters.put(tag, queriesParameters);
 
         return mSQLiteDatabase.updateWithOnConflict(
                 table,
@@ -443,63 +402,12 @@ public class RestorableSQLiteDatabase {
         if (tag == null)
             throw new IllegalArgumentException("The tag must not be null.");
 
-        // Gets all affected_rows
-        Cursor restoring_cursor = mSQLiteDatabase.query(
+        generateRestoringDelete(
                 table,
-                null,
                 whereClause,
                 whereArgs,
-                null,
-                null,
-                null
+                tag
         );
-
-        ArrayList<String> queries = new ArrayList<>();
-        ArrayList<String[]> queriesParameters = new ArrayList<>();
-
-        // Generates restoring queries
-        while (restoring_cursor.moveToNext()) {
-            StringBuilder sql = new StringBuilder();
-            sql.append("INSERT OR REPLACE INTO ");
-            sql.append(table);
-
-            int i = 0;
-            String[] parameters = new String[restoring_cursor.getColumnCount()];
-
-            StringBuilder sql_columns = new StringBuilder();
-            StringBuilder sql_values = new StringBuilder();
-
-            for (String columnName : restoring_cursor.getColumnNames()) {
-                if (i > 0) {
-                    sql_columns.append(", ");
-                    sql_values.append(", ");
-                } else {
-                    sql_columns.append(" (");
-                    sql_values.append(" (");
-                }
-
-                sql_columns.append(columnName);
-                sql_values.append("?");
-                parameters[i] = restoring_cursor.getString(restoring_cursor.getColumnIndex(columnName));
-
-                i++;
-            }
-
-            sql_columns.append(")");
-            sql_values.append(")");
-
-            sql.append(sql_columns.toString());
-            sql.append(" VALUES ");
-            sql.append(sql_values.toString());
-
-            queries.add(sql.toString());
-            queriesParameters.add(parameters);
-        }
-
-        restoring_cursor.close();
-
-        mTagQueryTable.put(tag, queries);
-        mTagQueryParameters.put(tag, queriesParameters);
 
         return mSQLiteDatabase.delete(
                 table,
@@ -579,21 +487,153 @@ public class RestorableSQLiteDatabase {
             Update updateStatement = (Update) statement;
             table = updateStatement.getTables().get(0).getName();
             where = updateStatement.getWhere().toString();
-            // TODO
+            generateRestoringUpdate(
+                    table,
+                    where,
+                    selectionArgs,
+                    tag
+            );
 
         } else if (sql.toLowerCase(Locale.getDefault()).contains("delete")) {
 
             Delete deleteStatement = (Delete) statement;
             table = deleteStatement.getTable().getName();
             where = deleteStatement.getWhere().toString();
-            // TODO
-
+            generateRestoringDelete(
+                    table,
+                    where,
+                    selectionArgs,
+                    tag
+            );
         }
     }
 
     private void generateInsertRawQuery(Cursor cursor, String table, String tag)
             throws JSQLParserException, ClassCastException {
-        // TODO
+        ArrayList<String> queries = new ArrayList<>();
+        ArrayList<String[]> queriesParameters = new ArrayList<>();
+
+        queries.add("DELETE FROM " + table + " WHERE " + ROWID + " = ?");
+        queriesParameters.add(new String[] {cursor.getString(cursor.getColumnIndex(ROWID))});
+
+        mTagQueryTable.put(tag, queries);
+        mTagQueryParameters.put(tag, queriesParameters);
+    }
+
+    private void generateRestoringDelete(String table,
+                                         String whereClause,
+                                         String[] whereArgs,
+                                         String tag) {
+        // Gets all affected_rows
+        Cursor restoring_cursor = mSQLiteDatabase.query(
+                table,
+                null,
+                whereClause,
+                whereArgs,
+                null,
+                null,
+                null
+        );
+
+        ArrayList<String> queries = new ArrayList<>();
+        ArrayList<String[]> queriesParameters = new ArrayList<>();
+
+        // Generates restoring queries
+        while (restoring_cursor.moveToNext()) {
+            StringBuilder sql = new StringBuilder();
+            sql.append("INSERT OR REPLACE INTO ");
+            sql.append(table);
+
+            int i = 0;
+            String[] parameters = new String[restoring_cursor.getColumnCount()];
+
+            StringBuilder sql_columns = new StringBuilder();
+            StringBuilder sql_values = new StringBuilder();
+
+            for (String columnName : restoring_cursor.getColumnNames()) {
+                if (i > 0) {
+                    sql_columns.append(", ");
+                    sql_values.append(", ");
+                } else {
+                    sql_columns.append(" (");
+                    sql_values.append(" (");
+                }
+
+                sql_columns.append(columnName);
+                sql_values.append("?");
+                parameters[i] = restoring_cursor.getString(restoring_cursor.getColumnIndex(columnName));
+
+                i++;
+            }
+
+            sql_columns.append(")");
+            sql_values.append(")");
+
+            sql.append(sql_columns.toString());
+            sql.append(" VALUES ");
+            sql.append(sql_values.toString());
+
+            queries.add(sql.toString());
+            queriesParameters.add(parameters);
+        }
+
+        restoring_cursor.close();
+
+        mTagQueryTable.put(tag, queries);
+        mTagQueryParameters.put(tag, queriesParameters);
+    }
+
+    private void generateRestoringUpdate(String table,
+                                         String whereClause,
+                                         String[] whereArgs,
+                                         String tag) {
+        // Gets all affected_rows
+        Cursor restoring_cursor = mSQLiteDatabase.query(
+                table,
+                null,
+                whereClause,
+                whereArgs,
+                null,
+                null,
+                null
+        );
+
+        ArrayList<String> queries = new ArrayList<>();
+        ArrayList<String[]> queriesParameters = new ArrayList<>();
+
+        // Generates restoring queries
+        while (restoring_cursor.moveToNext()) {
+            StringBuilder sql = new StringBuilder();
+            sql.append("UPDATE ");
+            sql.append(table);
+            sql.append(" SET ");
+
+            int i = 0;
+            String[] parameters = new String[restoring_cursor.getColumnCount() + 1];
+
+            for (String columnName : restoring_cursor.getColumnNames()) {
+                if (i > 0) sql.append(", ");
+
+                sql.append(columnName);
+                sql.append(" = ?");
+                parameters[i] = restoring_cursor.getString(restoring_cursor.getColumnIndex(columnName));
+
+                i++;
+            }
+
+            sql.append(" WHERE ");
+            sql.append(ROWID);
+            sql.append(" = ?");
+            parameters[i] = restoring_cursor.getString(restoring_cursor.getColumnIndex(ROWID));
+
+            queries.add(sql.toString());
+            queriesParameters.add(parameters);
+        }
+
+        restoring_cursor.close();
+
+        mTagQueryTable.put(tag, queries);
+        mTagQueryParameters.put(tag, queriesParameters);
     }
 
     /**
