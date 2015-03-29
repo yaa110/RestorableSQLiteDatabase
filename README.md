@@ -332,7 +332,7 @@ Replicates the [updateWithOnConflict](http://developer.android.com/reference/and
 
 ## Example: Undoing deleted rows
 
-1. Create a subclass of `SQLiteOpenHelper`:
+First, create a subclass of `SQLiteOpenHelper`:
 
 ```java
 public class DbHelper extends SQLiteOpenHelper {
@@ -360,7 +360,7 @@ public class DbHelper extends SQLiteOpenHelper {
 }
 ```
 
-2. Then, use `RestorableSQLiteDatabase`:
+Then, use `RestorableSQLiteDatabase`:
 ```java
 HashMap<String, String> tableRowid = new HashMap<>();
 tableRowid.put(TABLE_NAME, COLUMN_ROWID);
