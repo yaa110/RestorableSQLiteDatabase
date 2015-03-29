@@ -422,6 +422,7 @@ public class RestorableSQLiteDatabase {
         generateRawUpdateDeleteQuery(statement, sql, selectionArgs, tag);
 
         Cursor cursor =  mSQLiteDatabase.rawQuery(sql, selectionArgs);
+        cursor.moveToFirst();
 
         if (sql.toLowerCase(Locale.getDefault()).contains("insert into")) {
             Insert insertStatement = (Insert) statement;
@@ -450,6 +451,7 @@ public class RestorableSQLiteDatabase {
         generateRawUpdateDeleteQuery(statement, sql, selectionArgs, tag);
 
         Cursor cursor = mSQLiteDatabase.rawQuery(sql, selectionArgs, cancellationSignal);
+        cursor.moveToFirst();
 
         if (sql.toLowerCase(Locale.getDefault()).contains("insert into")) {
             Insert insertStatement = (Insert) statement;
@@ -539,7 +541,7 @@ public class RestorableSQLiteDatabase {
         ArrayList<String> queries = new ArrayList<>();
         ArrayList<String[]> queriesParameters = new ArrayList<>();
 
-        Cursor cursor = mSQLiteDatabase.query(
+        /*Cursor cursor = mSQLiteDatabase.query(
                 false,
                 table,
                 new String[] {mTableRowid.get(table)},
@@ -549,13 +551,17 @@ public class RestorableSQLiteDatabase {
                 null,
                 mTableRowid.get(table) + " DESC",
                 "1"
-        );
+        );*/
 
-        queries.add("DELETE FROM " + table + " WHERE " + mTableRowid.get(table) + " = ?");
-        queriesParameters.add(new String[]{cursor.getString(cursor.getColumnIndex(mTableRowid.get(table)))});
+        Cursor cursor = mSQLiteDatabase.rawQuery("SELECT MAX(" + mTableRowid.get(table) + ") FROM " + table, null);
 
-        mTagQueryTable.put(tag, queries);
-        mTagQueryParameters.put(tag, queriesParameters);
+        if (cursor.moveToFirst()) {
+            queries.add("DELETE FROM " + table + " WHERE " + mTableRowid.get(table) + " = ?");
+            queriesParameters.add(new String[]{cursor.getString(0)});
+
+            mTagQueryTable.put(tag, queries);
+            mTagQueryParameters.put(tag, queriesParameters);
+        }
 
         cursor.close();
     }
