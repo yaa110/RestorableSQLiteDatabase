@@ -508,6 +508,14 @@ public class RestorableSQLiteDatabase {
         }
     }
 
+    /**
+     * Generates the restoring query of rawQuery insertion.
+     * @param cursor returned cursor over the result of rawQuery.
+     * @param table the table name.
+     * @param tag the tag mapped to restoring queries.
+     * @throws JSQLParserException
+     * @throws ClassCastException
+     */
     private void generateInsertRawQuery(Cursor cursor, String table, String tag)
             throws JSQLParserException, ClassCastException {
         ArrayList<String> queries = new ArrayList<>();
@@ -520,6 +528,13 @@ public class RestorableSQLiteDatabase {
         mTagQueryParameters.put(tag, queriesParameters);
     }
 
+    /**
+     * Generates the restoring query of rawQuery deletion.
+     * @param table the table name.
+     * @param whereClause the optional WHERE clause to apply when deleting.
+     * @param whereArgs arguments to be replaced with ? in the SQL query.
+     * @param tag the tag mapped to restoring queries.
+     */
     private void generateRestoringDelete(String table,
                                          String whereClause,
                                          String[] whereArgs,
@@ -583,6 +598,13 @@ public class RestorableSQLiteDatabase {
         mTagQueryParameters.put(tag, queriesParameters);
     }
 
+    /**
+     * Generates the restoring query of rawQuery updating.
+     * @param table the table name.
+     * @param whereClause the optional WHERE clause to apply when updating.
+     * @param whereArgs arguments to be replaced with ? in the SQL query.
+     * @param tag the tag mapped to restoring queries.
+     */
     private void generateRestoringUpdate(String table,
                                          String whereClause,
                                          String[] whereArgs,
