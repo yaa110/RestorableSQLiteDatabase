@@ -15,7 +15,7 @@ android {
 
 publish {
     // https://github.com/novoda/bintray-release/wiki/Configuration-of-the-publish-closure
-    userOrg = 'Navid'
+    userOrg = 'yaa110'
     groupId = 'github.yaa110.db'
     artifactId = 'restorablesqlitedatabase'
     licences = ['MIT']
