@@ -2,6 +2,37 @@ Restorable SQLiteDatabase
 =========================
 RestorableSQLiteDatabase is a wrapper to replicate android's [SQLiteDatabase](http://developer.android.com/reference/android/database/sqlite/SQLiteDatabase.html) class to manage a SQLite database with restoring capability. This wrapper makes it possible to undo changes made after execution of SQL queries.
 
+## How to use
+
+**Use Gradle**
+
+Reference library using this dependency in your module's `build.gradle` file:
+
+```Gradle
+repositories {
+    maven {
+        url  "http://dl.bintray.com/yaa110/maven"
+    }
+}
+
+dependencies {
+    compile 'github.yaa110.db:restorablesqlitedatabase:0.1.0'
+}
+```
+
+[ ![Download](https://img.shields.io/badge/Download-0.1.0-green.svg) ](https://bintray.com/yaa110/maven/restorablesqlitedatabase/view)
+
+**Or Use Maven**
+
+```xml
+<dependency>
+	<groupId>github.yaa110.db</groupId>
+	<artifactId>restorablesqlitedatabase</artifactId>
+	<version>0.1.0</version>
+	<type>aar</type>
+</dependency>
+```
+
 ## Example: Undoing deleted rows
 
 First, create a subclass of `SQLiteOpenHelper`:
