@@ -478,8 +478,8 @@ public class RestorableSQLiteDatabase {
     private void generateRawUpdateDeleteQuery(Statement statement, String sql, String[] selectionArgs, String tag)
             throws JSQLParserException, ClassCastException {
 
-        String table = null;
-        String where = null;
+        String table;
+        String where;
 
         if (sql.toLowerCase(Locale.getDefault()).contains("update")) {
 
