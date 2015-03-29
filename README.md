@@ -2,6 +2,57 @@ Restorable SQLiteDatabase
 =========================
 RestorableSQLiteDatabase is a wrapper to replicate android's [SQLiteDatabase](http://developer.android.com/reference/android/database/sqlite/SQLiteDatabase.html) class to manage a SQLite database with restoring capability. This wrapper makes it possible to undo changes made after execution of SQL queries.
 
+## Example: Undoing deleted rows
+
+First, create a subclass of `SQLiteOpenHelper`:
+
+```java
+public class DbHelper extends SQLiteOpenHelper {
+
+    public DbHelper(Context context) {
+        super(context, DB_NAME, null, DB_VERSION);
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+        db.execSQL(
+                "CREATE TABLE IF NOT EXISTS " + TABLE_NAME + " (" +
+                        COLUMN_ROWID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                        COLUMN_TITLE + " TEXT" +
+                        ");"
+        );
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int old_version, int new_version) {
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE_NAME);
+        onCreate(db);
+    }
+
+}
+```
+
+Then, use `RestorableSQLiteDatabase`:
+```java
+HashMap<String, String> tableRowid = new HashMap<>();
+tableRowid.put(TABLE_NAME, COLUMN_ROWID);
+
+DbHelper helper = new DbHelper(this);
+
+RestorableSQLiteDatabase db = new RestorableSQLiteDatabase(helper, tableRowid);
+
+// Delete some rows
+db.delete(
+        TABLE_NAME,
+        COLUMN_TITLE + " = ?",
+        new String[] {"demo"},
+        "DELETION_TAG"
+);
+
+// Undoing deletion
+db.restore("DELETION_TAG");
+```
+
 ## Documentation
 ```java
 public static RestorableSQLiteDatabase getInstance(SQLiteDatabase mSQLiteDatabase, HashMap<String, String> tableRowid)
@@ -330,60 +381,9 @@ Replicates the [updateWithOnConflict](http://developer.android.com/reference/and
 **Throws**
 - *IllegalArgumentException* if the tag is null.
 
-## Example: Undoing deleted rows
-
-First, create a subclass of `SQLiteOpenHelper`:
-
-```java
-public class DbHelper extends SQLiteOpenHelper {
-
-    public DbHelper(Context context) {
-        super(context, DB_NAME, null, DB_VERSION);
-    }
-
-    @Override
-    public void onCreate(SQLiteDatabase db) {
-        db.execSQL(
-                "CREATE TABLE IF NOT EXISTS " + TABLE_NAME + " (" +
-                        COLUMN_ROWID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                        COLUMN_TITLE + " TEXT" +
-                        ");"
-        );
-    }
-
-    @Override
-    public void onUpgrade(SQLiteDatabase db, int old_version, int new_version) {
-        db.execSQL("DROP TABLE IF EXISTS " + TABLE_NAME);
-        onCreate(db);
-    }
-
-}
-```
-
-Then, use `RestorableSQLiteDatabase`:
-```java
-HashMap<String, String> tableRowid = new HashMap<>();
-tableRowid.put(TABLE_NAME, COLUMN_ROWID);
-
-DbHelper helper = new DbHelper(this);
-
-RestorableSQLiteDatabase db = new RestorableSQLiteDatabase(helper, tableRowid);
-
-// Delete some rows
-db.delete(
-        TABLE_NAME,
-        COLUMN_TITLE + " = ?",
-        new String[] {"demo"},
-        "DELETION_TAG"
-);
-
-// Undoing deletion
-db.restore("DELETION_TAG");
-```
-
 ## Dependencies
 
-**[JSqlParser](https://github.com/JSQLParser/JSqlParser)**: JSqlParser parses an SQL statement and translate it into a hierarchy of Java classes. JSqlParser is licensed under the LGPL V2.1.
+**[JSqlParser](https://github.com/JSQLParser/JSqlParser)** parses an SQL statement and translate it into a hierarchy of Java classes. JSqlParser is licensed under the LGPL V2.1.
 
 ## License
 RestorableSQLiteDatabase is licensed under the MIT License.
