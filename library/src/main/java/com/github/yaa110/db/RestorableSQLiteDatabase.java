@@ -24,7 +24,7 @@ import java.util.Locale;
 import java.util.Set;
 
 /**
- * A wrapper to replicate android's SQLiteDatabase class to manage a SQLite database with restoring capability.
+ * A wrapper to replicate android's SQLiteDatabase class with restoring capability.
  * This wrapper makes it possible to undo changes made after execution of SQL commands.
  */
 @SuppressWarnings("UnusedDeclaration")

@@ -1,6 +1,6 @@
 Restorable SQLiteDatabase
 =========================
-RestorableSQLiteDatabase is a wrapper to replicate android's [SQLiteDatabase](http://developer.android.com/reference/android/database/sqlite/SQLiteDatabase.html) class to manage a SQLite database with restoring capability. This wrapper makes it possible to undo changes made after execution of SQL queries.
+RestorableSQLiteDatabase is a wrapper to replicate android's [SQLiteDatabase](http://developer.android.com/reference/android/database/sqlite/SQLiteDatabase.html) class with restoring capability. This wrapper makes it possible to undo changes made after execution of SQL queries.
 
 ## How to use
 
