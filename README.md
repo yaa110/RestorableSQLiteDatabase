@@ -20,9 +20,7 @@ dependencies {
 }
 ```
 
-[ ![Download](https://img.shields.io/badge/Download-0.1.0-green.svg) ](https://bintray.com/yaa110/maven/restorablesqlitedatabase/view)
-
-**Or Use Maven**
+**or Use Maven**
 
 ```xml
 <dependency>
@@ -32,6 +30,8 @@ dependencies {
 	<type>aar</type>
 </dependency>
 ```
+
+[ ![Download](https://img.shields.io/badge/Download-0.1.0-green.svg) ](https://bintray.com/yaa110/maven/restorablesqlitedatabase/view)
 
 ## Example: Undoing deleted rows
 
