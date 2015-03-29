@@ -1,4 +1,5 @@
 apply plugin: 'com.android.library'
+apply plugin: 'bintray-release'
 
 android {
     compileSdkVersion 22
@@ -9,6 +10,23 @@ android {
         targetSdkVersion 22
         versionCode 1
         versionName "0.1.0"
+    }
+}
+
+publish {
+    // https://github.com/novoda/bintray-release/wiki/Configuration-of-the-publish-closure
+    userOrg = 'Navid'
+    groupId = 'github.yaa110.db'
+    artifactId = 'restorablesqlitedatabase'
+    licences = ['MIT']
+    version = '0.1.0'
+    description = 'RestorableSQLiteDatabase is a wrapper to replicate android\'s SQLiteDatabase class to manage a SQLite database with restoring capability. This wrapper makes it possible to undo changes made after execution of SQL queries.'
+    website = 'https://github.com/yaa110/RestorableSQLiteDatabase'
+}
+
+buildscript {
+    dependencies {
+        classpath 'com.novoda:bintray-release:0.2.5'
     }
 }
 
