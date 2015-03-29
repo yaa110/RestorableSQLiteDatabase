@@ -426,7 +426,7 @@ public class RestorableSQLiteDatabase {
         if (sql.toLowerCase(Locale.getDefault()).contains("insert into")) {
             Insert insertStatement = (Insert) statement;
             String table = insertStatement.getTable().getName();
-            generateInsertRawQuery(cursor, table, tag);
+            generateInsertRawQuery(table, tag);
         }
 
         return cursor;
@@ -454,7 +454,7 @@ public class RestorableSQLiteDatabase {
         if (sql.toLowerCase(Locale.getDefault()).contains("insert into")) {
             Insert insertStatement = (Insert) statement;
             String table = insertStatement.getTable().getName();
-            generateInsertRawQuery(cursor, table, tag);
+            generateInsertRawQuery(table, tag);
         }
 
         return cursor;
@@ -484,9 +484,7 @@ public class RestorableSQLiteDatabase {
 
             String[] whereArgs = new String[argsNumberInWhere];
 
-            for (int i = argsNumberBeforeWhere; i < argsNumberBeforeWhere + argsNumberInWhere; i++) {
-                whereArgs[i - argsNumberBeforeWhere] = selectionArgs[i];
-            }
+            System.arraycopy(selectionArgs, argsNumberBeforeWhere, whereArgs, 0, argsNumberInWhere);
 
             generateRestoringUpdate(
                     table,
@@ -507,9 +505,7 @@ public class RestorableSQLiteDatabase {
 
             String[] whereArgs = new String[argsNumberInWhere];
 
-            for (int i = argsNumberBeforeWhere; i < argsNumberBeforeWhere + argsNumberInWhere; i++) {
-                whereArgs[i - argsNumberBeforeWhere] = selectionArgs[i];
-            }
+            System.arraycopy(selectionArgs, argsNumberBeforeWhere, whereArgs, 0, argsNumberInWhere);
 
             generateRestoringDelete(
                     table,
@@ -533,22 +529,35 @@ public class RestorableSQLiteDatabase {
 
     /**
      * Generates the restoring query of rawQuery insertion.
-     * @param cursor returned cursor over the result of rawQuery.
      * @param table the table name.
      * @param tag the tag mapped to restoring queries.
      * @throws JSQLParserException
      * @throws ClassCastException
      */
-    private void generateInsertRawQuery(Cursor cursor, String table, String tag)
+    private void generateInsertRawQuery(String table, String tag)
             throws JSQLParserException, ClassCastException {
         ArrayList<String> queries = new ArrayList<>();
         ArrayList<String[]> queriesParameters = new ArrayList<>();
 
+        Cursor cursor = mSQLiteDatabase.query(
+                false,
+                table,
+                new String[] {mTableRowid.get(table)},
+                null,
+                null,
+                null,
+                null,
+                mTableRowid.get(table) + " DESC",
+                "1"
+        );
+
         queries.add("DELETE FROM " + table + " WHERE " + mTableRowid.get(table) + " = ?");
-        queriesParameters.add(new String[] {cursor.getString(cursor.getColumnIndex(mTableRowid.get(table)))});
+        queriesParameters.add(new String[]{cursor.getString(cursor.getColumnIndex(mTableRowid.get(table)))});
 
         mTagQueryTable.put(tag, queries);
         mTagQueryParameters.put(tag, queriesParameters);
+
+        cursor.close();
     }
 
     /**
