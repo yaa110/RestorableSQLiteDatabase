@@ -6,7 +6,6 @@ import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.database.sqlite.SQLiteStatement;
 import android.os.Build;
 import android.os.CancellationSignal;
 import android.util.Log;
@@ -19,6 +18,7 @@ import net.sf.jsqlparser.statement.insert.Insert;
 import net.sf.jsqlparser.statement.update.Update;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Locale;
 import java.util.Set;
@@ -33,26 +33,30 @@ public class RestorableSQLiteDatabase {
     private static RestorableSQLiteDatabase mInstance = null;
     private SQLiteDatabase mSQLiteDatabase;
     private static final String TAG = "SQLiteDatabase";
-    private static final String ROWID = "rowid";
 
     /**
      * The hash table to map a tag to its restoring queries.
      */
-    public Hashtable<String, ArrayList<String>> mTagQueryTable;
+    private Hashtable<String, ArrayList<String>> mTagQueryTable;
 
     /**
      * The hash table to map a tag to the parameters should be used in the queries.
      */
-    public Hashtable<String, ArrayList<String[]>> mTagQueryParameters;
+    private Hashtable<String, ArrayList<String[]>> mTagQueryParameters;
+
+    /**
+     * Maps the table name to its rowid column name.
+     */
+    private HashMap<String, String> mTableRowid;
 
     /**
      * Singleton pattern constructor
      * @param mSQLiteDatabase the instance of the SQLiteDatabase to be wrapped.
      * @return an instance of this class.
      */
-    public static RestorableSQLiteDatabase getInstance(SQLiteDatabase mSQLiteDatabase){
+    public static RestorableSQLiteDatabase getInstance(SQLiteDatabase mSQLiteDatabase, HashMap<String, String> tableRowid){
         if(mInstance == null) {
-            mInstance = new RestorableSQLiteDatabase(mSQLiteDatabase);
+            mInstance = new RestorableSQLiteDatabase(mSQLiteDatabase, tableRowid);
         }
         return mInstance;
     }
@@ -62,9 +66,9 @@ public class RestorableSQLiteDatabase {
      * @param helper the instance of the SQLiteOpenHelper to open a database using {@link android.database.sqlite.SQLiteOpenHelper#getWritableDatabase() getWritableDatabase} method.
      * @return an instance of this class.
      */
-    public static <T extends SQLiteOpenHelper> RestorableSQLiteDatabase getInstance(T helper){
+    public static <T extends SQLiteOpenHelper> RestorableSQLiteDatabase getInstance(T helper, HashMap<String, String> tableRowid){
         if(mInstance == null) {
-            mInstance = new RestorableSQLiteDatabase(helper);
+            mInstance = new RestorableSQLiteDatabase(helper, tableRowid);
         }
         return mInstance;
     }
@@ -74,8 +78,8 @@ public class RestorableSQLiteDatabase {
      * @param mSQLiteDatabase the instance of the SQLiteDatabase to be wrapped.
      * @return an instance of this class.
      */
-    public static RestorableSQLiteDatabase getNewInstance(SQLiteDatabase mSQLiteDatabase){
-        mInstance = new RestorableSQLiteDatabase(mSQLiteDatabase);
+    public static RestorableSQLiteDatabase getNewInstance(SQLiteDatabase mSQLiteDatabase, HashMap<String, String> tableRowid){
+        mInstance = new RestorableSQLiteDatabase(mSQLiteDatabase, tableRowid);
         return mInstance;
     }
 
@@ -84,8 +88,8 @@ public class RestorableSQLiteDatabase {
      * @param helper the instance of the SQLiteOpenHelper to open a database using {@link android.database.sqlite.SQLiteOpenHelper#getWritableDatabase() getWritableDatabase} method.
      * @return an instance of this class.
      */
-    public static <T extends SQLiteOpenHelper> RestorableSQLiteDatabase getNewInstance(T helper){
-        mInstance = new RestorableSQLiteDatabase(helper);
+    public static <T extends SQLiteOpenHelper> RestorableSQLiteDatabase getNewInstance(T helper, HashMap<String, String> tableRowid){
+        mInstance = new RestorableSQLiteDatabase(helper, tableRowid);
         return mInstance;
     }
 
@@ -93,9 +97,10 @@ public class RestorableSQLiteDatabase {
      * Private constructor of singleton pattern.
      * @param mSQLiteDatabase the instance of the SQLiteDatabase to be wrapped.
      */
-    private RestorableSQLiteDatabase(SQLiteDatabase mSQLiteDatabase) {
+    private RestorableSQLiteDatabase(SQLiteDatabase mSQLiteDatabase, HashMap<String, String> tableRowid) {
         mTagQueryTable = new Hashtable<>();
         mTagQueryParameters = new Hashtable<>();
+        mTableRowid = tableRowid;
         this.mSQLiteDatabase = mSQLiteDatabase;
     }
 
@@ -103,9 +108,10 @@ public class RestorableSQLiteDatabase {
      * Private constructor of singleton pattern.
      * @param helper the instance of the SQLiteOpenHelper to open a database using {@link android.database.sqlite.SQLiteOpenHelper#getWritableDatabase() getWritableDatabase} method.
      */
-    private <T extends SQLiteOpenHelper> RestorableSQLiteDatabase(T helper) {
+    private <T extends SQLiteOpenHelper> RestorableSQLiteDatabase(T helper, HashMap<String, String> tableRowid) {
         mTagQueryTable = new Hashtable<>();
         mTagQueryParameters = new Hashtable<>();
+        mTableRowid = tableRowid;
         this.mSQLiteDatabase = helper.getWritableDatabase();
     }
 
@@ -216,16 +222,15 @@ public class RestorableSQLiteDatabase {
     /**
      * Use the {@link android.database.sqlite.SQLiteDatabase#replace(String, String, android.content.ContentValues) replace} method.
      * @param tag The tag to be mapped to the restoring query.
-     * @param rowIdAlias The alias used in the initialValues to set the value of ROWID. Passing null will cause using the default value of rowid.
      * @throws IllegalArgumentException if the tag is null.
      */
-    public long replace(String table, String nullColumnHack, ContentValues initialValues, String tag, String rowIdAlias) {
+    public long replace(String table, String nullColumnHack, ContentValues initialValues, String tag) {
         if (tag == null)
             throw new IllegalArgumentException("The tag must not be null.");
 
         try {
             return insertWithOnConflict(table, nullColumnHack, initialValues,
-                    SQLiteDatabase.CONFLICT_REPLACE, tag, rowIdAlias);
+                    SQLiteDatabase.CONFLICT_REPLACE, tag);
         } catch (SQLException e) {
             Log.e(TAG, "Error inserting " + initialValues, e);
             return -1;
@@ -235,16 +240,15 @@ public class RestorableSQLiteDatabase {
     /**
      * Use the {@link android.database.sqlite.SQLiteDatabase#replaceOrThrow(String, String, android.content.ContentValues) replaceOrThrow} method.
      * @param tag The tag to be mapped to the restoring query.
-     * @param rowIdAlias The alias used in the initialValues to set the value of ROWID. Passing null will cause using the default value of rowid.
      * @throws IllegalArgumentException if the tag is null.
      */
     public long replaceOrThrow(String table, String nullColumnHack,
-                               ContentValues initialValues, String tag, String rowIdAlias) throws SQLException {
+                               ContentValues initialValues, String tag) throws SQLException {
         if (tag == null)
             throw new IllegalArgumentException("The tag must not be null.");
 
         return insertWithOnConflict(table, nullColumnHack, initialValues,
-                SQLiteDatabase.CONFLICT_REPLACE, tag, rowIdAlias);
+                SQLiteDatabase.CONFLICT_REPLACE, tag);
     }
 
     /**
@@ -254,24 +258,6 @@ public class RestorableSQLiteDatabase {
      */
     public long insertWithOnConflict(String table, String nullColumnHack,
                                      ContentValues initialValues, int conflictAlgorithm, String tag) {
-        return insertWithOnConflict(
-                table,
-                nullColumnHack,
-                initialValues,
-                conflictAlgorithm,
-                tag,
-                null
-        );
-    }
-
-    /**
-     * Use the {@link android.database.sqlite.SQLiteDatabase#replaceOrThrow(String, String, android.content.ContentValues) insertWithOnConflict} method.
-     * @param tag The tag to be mapped to the restoring query.
-     * @param rowIdAlias The alias used in the initialValues to set the value of ROWID. Passing null will cause using the default value of rowid.
-     * @throws IllegalArgumentException if the tag is null.
-     */
-    public long insertWithOnConflict(String table, String nullColumnHack,
-                                     ContentValues initialValues, int conflictAlgorithm, String tag, String rowIdAlias) {
         if (tag == null)
             throw new IllegalArgumentException("The tag must not be null.");
 
@@ -283,13 +269,11 @@ public class RestorableSQLiteDatabase {
 
         // Generates replacement restoring query
         if (conflictAlgorithm == SQLiteDatabase.CONFLICT_REPLACE) {
-            if (rowIdAlias == null) rowIdAlias = ROWID;
-
             Cursor restoring_cursor = mSQLiteDatabase.query(
                     table,
                     null,
-                    rowIdAlias + " = ?",
-                    new String[] {(String) initialValues.get(rowIdAlias)},
+                    mTableRowid.get(table) + " = ?",
+                    new String[] {(String) initialValues.get(mTableRowid.get(table))},
                     null,
                     null,
                     null,
@@ -306,7 +290,7 @@ public class RestorableSQLiteDatabase {
                 String[] parameters = new String[restoring_cursor.getColumnCount()];
 
                 for (String columnName : restoring_cursor.getColumnNames()) {
-                    if (columnName.equals(rowIdAlias))
+                    if (columnName.equals(mTableRowid.get(table)))
                         continue;
 
                     if (i > 0) sql.append(", ");
@@ -319,9 +303,9 @@ public class RestorableSQLiteDatabase {
                 }
 
                 sql.append(" WHERE ");
-                sql.append(rowIdAlias);
+                sql.append(mTableRowid.get(table));
                 sql.append(" = ?");
-                parameters[i] = (String) initialValues.get(rowIdAlias);
+                parameters[i] = (String) initialValues.get(mTableRowid.get(table));
 
                 queries.add(sql.toString());
                 queriesParameters.add(parameters);
@@ -342,7 +326,7 @@ public class RestorableSQLiteDatabase {
 
         // Generates query to restore insertion
         if (!restore_status) {
-            queries.add("DELETE FROM " + table + " WHERE " + ROWID + " = ?");
+            queries.add("DELETE FROM " + table + " WHERE " + mTableRowid.get(table) + " = ?");
             queriesParameters.add(new String[] {id + ""});
         }
 
@@ -521,8 +505,8 @@ public class RestorableSQLiteDatabase {
         ArrayList<String> queries = new ArrayList<>();
         ArrayList<String[]> queriesParameters = new ArrayList<>();
 
-        queries.add("DELETE FROM " + table + " WHERE " + ROWID + " = ?");
-        queriesParameters.add(new String[] {cursor.getString(cursor.getColumnIndex(ROWID))});
+        queries.add("DELETE FROM " + table + " WHERE " + mTableRowid.get(table) + " = ?");
+        queriesParameters.add(new String[] {cursor.getString(cursor.getColumnIndex(mTableRowid.get(table)))});
 
         mTagQueryTable.put(tag, queries);
         mTagQueryParameters.put(tag, queriesParameters);
@@ -644,9 +628,9 @@ public class RestorableSQLiteDatabase {
             }
 
             sql.append(" WHERE ");
-            sql.append(ROWID);
+            sql.append(mTableRowid.get(table));
             sql.append(" = ?");
-            parameters[i] = restoring_cursor.getString(restoring_cursor.getColumnIndex(ROWID));
+            parameters[i] = restoring_cursor.getString(restoring_cursor.getColumnIndex(mTableRowid.get(table)));
 
             queries.add(sql.toString());
             queriesParameters.add(parameters);
@@ -722,6 +706,13 @@ public class RestorableSQLiteDatabase {
         }
 
         return 0;
+    }
+
+    /**
+     * Use the {@link android.database.sqlite.SQLiteDatabase#close() close} method.
+     */
+    public void close() {
+        mSQLiteDatabase.close();
     }
 
 }
