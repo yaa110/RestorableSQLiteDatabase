@@ -61,7 +61,7 @@ public class RestorableSQLiteDatabase {
      * @param helper the instance of the SQLiteOpenHelper to open a database using {@link android.database.sqlite.SQLiteOpenHelper#getWritableDatabase() getWritableDatabase} method.
      * @return an instance of this class.
      */
-    public static RestorableSQLiteDatabase getInstance(SQLiteOpenHelper helper){
+    public static <T extends SQLiteOpenHelper> RestorableSQLiteDatabase getInstance(T helper){
         if(mInstance == null) {
             mInstance = new RestorableSQLiteDatabase(helper);
         }
@@ -83,7 +83,7 @@ public class RestorableSQLiteDatabase {
      * @param helper the instance of the SQLiteOpenHelper to open a database using {@link android.database.sqlite.SQLiteOpenHelper#getWritableDatabase() getWritableDatabase} method.
      * @return an instance of this class.
      */
-    public static RestorableSQLiteDatabase getNewInstance(SQLiteOpenHelper helper){
+    public static <T extends SQLiteOpenHelper> RestorableSQLiteDatabase getNewInstance(T helper){
         mInstance = new RestorableSQLiteDatabase(helper);
         return mInstance;
     }
@@ -102,7 +102,7 @@ public class RestorableSQLiteDatabase {
      * Private constructor of singleton pattern.
      * @param helper the instance of the SQLiteOpenHelper to open a database using {@link android.database.sqlite.SQLiteOpenHelper#getWritableDatabase() getWritableDatabase} method.
      */
-    private RestorableSQLiteDatabase(SQLiteOpenHelper helper) {
+    private <T extends SQLiteOpenHelper> RestorableSQLiteDatabase(T helper) {
         mTagQueryTable = new Hashtable<>();
         mTagQueryParameters = new Hashtable<>();
         this.mSQLiteDatabase = helper.getWritableDatabase();
