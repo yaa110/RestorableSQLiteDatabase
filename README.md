@@ -9,12 +9,6 @@ RestorableSQLiteDatabase is a wrapper to replicate android's [SQLiteDatabase](ht
 Reference library using this dependency in your module's `build.gradle` file:
 
 ```Gradle
-repositories {
-    maven {
-        url  "http://dl.bintray.com/yaa110/maven"
-    }
-}
-
 dependencies {
     compile 'github.yaa110.db:restorablesqlitedatabase:0.1.0'
 }
