@@ -1,5 +1,7 @@
 Restorable SQLiteDatabase
 =========================
+[ ![Download](https://img.shields.io/badge/Download-0.1.0-green.svg) ](https://bintray.com/yaa110/maven/restorablesqlitedatabase/view) [![License](http://img.shields.io/:license-mit-blue.svg)](https://github.com/yaa110/RestorableSQLiteDatabase/blob/master/LICENSE)
+
 RestorableSQLiteDatabase is a wrapper to replicate android's [SQLiteDatabase](http://developer.android.com/reference/android/database/sqlite/SQLiteDatabase.html) class with restoring capability. This wrapper makes it possible to undo changes made after execution of SQL queries.
 
 ## How to use
@@ -24,8 +26,6 @@ dependencies {
 	<type>aar</type>
 </dependency>
 ```
-
-[ ![Download](https://img.shields.io/badge/Download-0.1.0-green.svg) ](https://bintray.com/yaa110/maven/restorablesqlitedatabase/view)
 
 ## Example: Undoing deleted rows
 
